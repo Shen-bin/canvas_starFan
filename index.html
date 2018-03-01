@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <title></title>
+    <style>
+        body {
+            margin: 0;
+            /* overflow-x: hidden;   横向出现滚动条 */
+            /* font-size: 0;   底部出现空白 */
+            height: 1280px;
+            height: 720px;
+            overflow: hidden;
+        }
+
+        ul {
+            margin: 0;
+            padding: 0;
+            list-style: none;
+        }
+
+        img {
+            /* vertical-align: middle; */
+        }
+
+        #canvas {
+            background: #000;
+        }
+
+        #nav {
+            width: 130px;
+            height: 400px;
+            position: absolute;
+            left: 0;
+            top: 0;
+            right: 0;
+            bottom: 0;
+            margin: auto;
+        }
+
+        #nav li {
+            position: absolute;
+            left: 0;
+            top: 0;
+            transform-origin: 25px 375px;
+            box-shadow: 2px 2px 20px #000;
+            transition: 1s;
+        }
+    </style>
+</head>
+
+<body scroll="no">
+    <div id="sector">
+        <canvas id="canvas" width="" height=""></canvas>
+        <div id="nav">
+            <ul>
+                <li>
+                    <img src="images/img1.png" alt="" />
+                </li>
+                <li>
+                    <img src="images/img2.png" alt="" />
+                </li>
+                <li>
+                    <img src="images/img3.png" alt="" />
+                </li>
+                <li>
+                    <img src="images/img4.png" alt="" />
+                </li>
+                <li>
+                    <img src="images/img5.png" alt="" />
+                </li>
+                <li>
+                    <img src="images/img6.png" alt="" />
+                </li>
+                <li>
+                    <img src="images/img7.png" alt="" />
+                </li>
+                <li>
+                    <img src="images/img8.png" alt="" />
+                </li>
+                <li>
+                    <img src="images/img9.png" alt="" />
+                </li>
+                <li>
+                    <img src="images/img10.png" alt="" />
+                </li>
+                <li>
+                    <img src="images/img11.png" alt="" />
+                </li>
+                <li>
+                    <img src="images/img13.png" alt="" />
+                </li>
+            </ul>
+        </div>
+    </div>
+    <script>
+        window.onload = function () {
+            fanNav({ id: "nav", intervalDeg: 15, openDeg: 30 });
+            paopao({ id: "canvas"});
+
+        }
+
+
+        /*
+            json
+            id:     目标canvas的Id
+            width:  目标canvas的width
+            height: 目标canvas的height
+            starNum:生成星星密度
+            ballNum:生成泡泡密度
+        */
+        function paopao(json) {
+            if (!json.id) {
+                return false;
+            }
+            var arrBalls = [];//存放气泡
+            var arrStars = [];//存放星星
+
+            var colors = json.colors || ["#ddf", "#dff", "#fdd", "#ffd", "#fdf","rgb(255, 211, 249)"];
+            var starNum = json.starNum==0?0:json.starNum||1;
+            var ballNum = json.ballNum==0?0:json.ballNum||1;
+            var oCanvas = document.getElementById(json.id);
+            var context = oCanvas.getContext("2d");
+            oCanvas.width = json.width || 1280;
+            oCanvas.height = json.height || 720;
+
+            function randomNum(min, max) {
+                return Math.round(Math.random() * (max - min) + min);
+            }
+
+            function drawArc(ball) {
+                context.beginPath();
+                context.arc(ball.x, ball.y, ball.r, 0, 2 * Math.PI);
+                context.fillStyle = ball.color;
+                context.globalCompositeOperation = "lighter";
+                context.fill();
+            }
+            // r, R, x, y, rot,fillStyle
+            function drawStar(star) {
+                context.beginPath();
+                for (var i = 0; i < 5; i++) {
+                    context.lineTo(Math.cos((18 + 72 * i - star.rot) / 180 * Math.PI) * star.R + star.x, - Math.sin((18 + 72 * i - star.rot) / 180 * Math.PI) * star.R + star.y);
+                    context.lineTo(Math.cos((54 + 72 * i - star.rot) / 180 * Math.PI) * star.r + star.x, - Math.sin((54 + 72 * i - star.rot) / 180 * Math.PI) * star.r + star.y);
+                }
+                context.closePath();
+                context.fillStyle = star.color;
+                context.globalCompositeOperation = "lighter";
+                context.fill();
+            }
+
+            var timer;
+            var on = true;
+            oCanvas.onmousemove = function (ev) {
+                var event = ev || window.event;
+                
+                for (var i = 0; i < ballNum; i++) {
+                    var ball = {
+                        x: randomNum(-5, 5) + event.clientX,
+                        y: randomNum(-5, 5) + event.clientY,
+                        r: randomNum(10, 45),
+                        vx: Math.random() - 0.5,
+                        vy: Math.random() - 0.5,
+                        color: colors[randomNum(0, colors.length - 1)]
+                    }
+                    arrBalls.push(ball);
+                }
+                
+
+                for (var i = 0; i < starNum; i++) {
+                    var t = randomNum(10, 35);
+                    var star = {
+                        x: randomNum(-5, 5) + event.clientX,
+                        y: randomNum(-5, 5) + event.clientY,
+                        r: t,
+                        R: 2 * t,
+                        rot: randomNum(0, 360),
+                        vx: Math.random() - 0.5,
+                        vy: Math.random() - 0.5,
+                        color: colors[randomNum(0, colors.length - 1)]
+                    }
+                    arrStars.push(star);
+                }
+                if (on) {
+                    timer = window.setInterval(moveAll, 30);
+                    on = false;
+                }
+
+            }
+            function moveAll() {
+                context.clearRect(0, 0, oCanvas.width, oCanvas.height);
+                for (var i = 0; i < arrStars.length; i++) {
+                    arrStars[i].x += arrStars[i].vx * 8;
+                    arrStars[i].y += arrStars[i].vy * 8;
+                    arrStars[i].r = arrStars[i].r - 1;
+                    arrStars[i].R = 2 * arrStars[i].r;
+                    arrStars[i].rot += 5;
+                    if (arrStars[i].r < 1) {
+                        arrStars.splice(i, 1);
+                        continue;
+                    }
+                    drawStar(arrStars[i]);
+                }
+                /*
+                if (arrStars.length == 0) {
+                    clearInterval(timer);
+                    on = true;
+                }
+                */
+                for (var i = 0; i < arrBalls.length; i++) {
+                    arrBalls[i].x += arrBalls[i].vx * 8;
+                    arrBalls[i].y += arrBalls[i].vy * 8;
+                    arrBalls[i].r *= 0.94;
+                    if (arrBalls[i].r < 1) {
+                        arrBalls.splice(i, 1);
+                        continue;
+                    }
+                    drawArc(arrBalls[i]);
+                }
+
+                if (arrBalls.length == 0 && arrStars.length == 0) {
+                    clearInterval(timer);
+                    on = true;
+                }
+
+            }
+        }
+
+
+
+        /*
+            json
+            id: 目标id
+            intervalDeg: 每页分隔角度;
+            openDeg :选中后打开角度;
+        */
+
+        function fanNav(json) {
+            if (!json.id) {
+                return false;
+            }
+            var id = json.id;
+            var intervalDeg = parseInt(json.intervalDeg) || 15;
+            var openDeg = parseInt(json.openDeg) || 15;
+
+            var oParent = document.getElementById(id);
+            var oLis = oParent.querySelectorAll("li");
+            var len = oLis.length;
+
+            //首页点击事件
+            var flag = false;
+            oLis[len - 1].onclick = function () {
+                for (var i = 0; i < len; i++) {
+                    var n;
+                    if (flag) {
+                        n = 360;
+                    } else {
+                        n = Math.ceil(i - len / 2) * intervalDeg;
+                    }
+                    oLis[i].style.transform = "rotate(" + n + "deg)";
+                }
+                flag = !flag;
+            }
+            //每页点击事件
+            /*
+            for (var i = 0; i < len - 1; i++) {
+                var index = i;
+                oLis[i].onclick = (function (index) {
+                    return function () {
+                        for (var j = 0; j < len; j++) {
+                            var n;
+                            if (j > index) {
+                                n = (j - index) * 15 + openDeg;
+                            } else {
+                                n = (j - index) * 15;
+                            }
+                            oLis[j].style.transform = "rotate(" + n + "deg)";
+                        }
+                    }
+                })(index)
+            }
+            */
+            for (var i = 0; i < len - 1; i++) {
+                oLis[i].index = i;
+                oLis[i].onclick = function () {
+                    var index = this.index;
+                    this.style.transform = "rotate(0deg)";
+                    for (var j = index - 1; j >= 0; j--) {
+                        oLis[j].style.transform = "rotate(" + (j - index) * intervalDeg + "deg)";
+                    }
+                    for (var j = index + 1; j < len; j++) {
+                        oLis[j].style.transform = "rotate(" + ((j - index) * intervalDeg + openDeg) + "deg)";
+                    }
+                }
+            }
+        }
+
+    </script>
+</body>
+
+</html>
